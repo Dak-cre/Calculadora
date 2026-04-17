@@ -160,15 +160,17 @@ int main()
 
 		case 1:
 		{
-
+			printf("Hola\n");
 			printf("Ingrese solo numeros enteros, y signos validos ( (),+,-,*,^ ) \n\n");
 			printf("Ingrese la operacion: \n");
 			char *exp;
 			exp = leerExpresion();
+			printf("Sin filtrar %s \n",exp);
 			exp = filtrarExpresion(exp);
-
+			printf("Filtrado %s \n",exp);
 			Token *t;
 			int n = tokenizarExpresion(exp, &t);
+			printf("%d \n",n);
 			if (n == 0)
 			{
 				printf("SINTAX ERROR \n");
