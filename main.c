@@ -3,20 +3,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-
-float resolver(Pila *p)
+int resolver(Pila *p, float *resultado)
 {
-
+	// La funcion resive una variable flotante para lograr guardar el calculo al igual que la pila
+	// de expresiones ya tranformada en su forma postfija, este retorna un entero, el cual indicara que
+	// las operaciones se pudieron hacer de manera exitosa, esto en casos como la division entre 0 que no se
+	// puede hacer, ademas de manejar mejor los errores.
 	Pila invertida;
 	inicializar(&invertida);
 	invertida = invertirPila(p);
 	Pila numeros;
-	//Pila operadores;
+	// Pila operadores;
 	inicializar(&numeros);
+
+	int estado = 1;
 
 	int i;
 
-	while (!vacia(&invertida))
+	while (!vacia(&invertida) && estado)
 	{
 
 		if (invertida.cabeza->token.tipo == NUMERO)
@@ -39,19 +43,34 @@ float resolver(Pila *p)
 				switch (invertida.cabeza->token.operacion)
 				{
 				case '+':
-					resultado = suma(a,b);
+					resultado = suma(a, b);
 					break;
 				case '-':
-					resultado = resta(a,b);
+					resultado = resta(a, b);
 					break;
 				case '*':
-					resultado = multipli(a,b);
+					resultado = multipli(a, b);
 					break;
 				case '/':
-					resultado = division(a,b);
+					if (b != 0)
+					{
+						resultado = division(a, b);
+					}
+					else
+					{
+						estado = 0;
+					}
 					break;
 				case '^':
-					resultado = potencia(a,b);
+					if (((int)b) == b)
+					{
+						resultado = potencia(a, b);
+					}
+					else
+					{
+						estado = 0;
+					}
+
 					break;
 				}
 
@@ -59,14 +78,15 @@ float resolver(Pila *p)
 				t.tipo = NUMERO;
 				t.valor = resultado;
 				pop(&invertida);
-				push(&numeros,t);
-			}else{
-				
+				push(&numeros, t);
+			}
+			else
+			{
 			}
 		}
 	}
-
-	return numeros.cabeza->token.valor;
+	*resultado = numeros.cabeza->token.valor;
+	return estado;
 }
 char *leerExpresion()
 {
@@ -93,6 +113,29 @@ char *leerExpresion()
 	return ptr;
 }
 
+char * filtrarExpresion(char * e){
+	// Esta funcion eliminara los espacios en blacos con el objetivo de permitir analizar mejor la expresion
+	// evitando que falle en especial cuando hay numeros negativos
+
+	int newSize = 0, cap = 1;
+	char * sinEspacios = malloc(cap);
+	int i = 0;
+	while(e[i] != '\0') {
+		if(  newSize + 1 >= cap ){
+			cap *=2;
+			sinEspacios = realloc(sinEspacios,cap);
+		}
+		if( e[i]!=' '  ){
+			sinEspacios[newSize] = e[i];
+			newSize++;
+		}
+		i++;
+	}
+
+	return sinEspacios;
+
+}
+
 int main()
 {
 
@@ -103,31 +146,72 @@ int main()
 	printf(" \\____/\\__,_/_/\\___/\\__,_/_/\\__,_/\\__,_/\\____/_/   \\__,_/    \n");
 
 	printf("\n \n");
-	char *exp;
-	exp = leerExpresion();
-
-	Token *t;
-	int n = tokenizarExpresion(exp, &t);
-	if (n == 0)
+	int opc;
+	do
 	{
-		printf("SINTAX ERROR \n");
-		return 0;
-	}
 
-	Pila expresion;
-	inicializar(&expresion);
-	int estado = convertir_postfija(&expresion, t, n);
-	if (estado == 0)
-	{
-		printf("SINTAX ERROR\n");
-		return 0;
-	}
-	float resultado = resolver(&expresion);
-	printf("%f \n", resultado);
+		printf("Selecciones una opcion \n");
+		printf("1. Hacer calculo \n");
+		printf("0. Salir\n");
+		scanf("%d", &opc);
+		while (getchar() != '\n');
+		switch (opc)
+		{
 
+		case 1:
+		{
+
+			printf("Ingrese solo numeros enteros, y signos validos ( (),+,-,*,^ ) \n\n");
+			printf("Ingrese la operacion: \n");
+			char *exp;
+			exp = leerExpresion();
+			exp = filtrarExpresion(exp);
+
+			Token *t;
+			int n = tokenizarExpresion(exp, &t);
+			if (n == 0)
+			{
+				printf("SINTAX ERROR \n");
+				free(exp);
+				break;
+			}
+
+			Pila expresion;
+			inicializar(&expresion);
+			int estado = convertir_postfija(&expresion, t, n);
+			if (estado == 0)
+			{
+				printf("SINTAX ERROR\n");
+				free(exp);
+				break;
+			}
+			float resultado;
+
+			if (resolver(&expresion, &resultado) == 0)
+			{
+				printf("SINTAX ERROR\n");
+				free(exp);
+				free(t);
+				break;
+			}
+
+			printf(" = %f \n\n", resultado);
+			free(exp);
+			break;
+		}
+
+		case 0:
+			printf("Saliendo....\n");
+			break;
+
+		default:
+			printf("Opcion no valida \n");
+			break;
+		}
+
+	} while (opc != 0);
 	return 10;
 }
-
 
 /* Funciones para evluar la expresion y que permiten su analisis */
 /*
@@ -139,7 +223,7 @@ int tokenizarExpresion(char *c, Token **t)
 	// 8 + 5 * (4+5) es valido pero (8/9*+9) no es valida ya que estan dos signos de operacion seguidos
 	int size = 0;	   // variable que indicara la cantidad de tokens obtenidos
 	int sizeArray = 1; // variable auxiliar para poder aumentar el tamaño del arreglo de tokens
-	
+
 	Token *tokens;
 	tokens = (Token *)malloc(sizeof(tokens));
 	int posicion = 0; // variable para recorrer el arreglo de caracteres
@@ -164,7 +248,7 @@ int tokenizarExpresion(char *c, Token **t)
 					caracter = *(c + posicion);
 					numero = (numero * 10) + (caracter - '0');
 					posicion++;
-					
+
 				}
 
 				nuevoToken.tipo = NUMERO;

@@ -61,14 +61,16 @@ void showPila(Pila *p) {
 }
 
 
-Token generarTokenOperacion(char c) {
+int generarTokenOperacion(char c,Token * token) {
+    // retornar un entero (1=true, 0=false) para indicar si el operador ingresado es valido
+    // permitiendo hacer un filtrado con operadores, o signo no validos
     Token t;
     t.operacion = c;
     t.valor = 0;
 
     if (c == '(') {
         t.tipo = PARENTESIS_IZQUIERDA;
-        t.prioridad = BAJA; // IMPORTANTE: Baja para que no expulse operadores
+        t.prioridad = BAJA;
     } 
     else if (c == ')') {
         t.tipo = PARENTESIS_DERECHA;
@@ -85,8 +87,11 @@ Token generarTokenOperacion(char c) {
     else if (c == '^') {
         t.tipo = OPERADOR;
         t.prioridad = ALTA;
+    }else{
+        return 0;
     }
-    return t;
+    *token = t; 
+    return 1;
 }
 
 int tokenizarExpresion(char *c, Token **t) {
@@ -94,6 +99,9 @@ int tokenizarExpresion(char *c, Token **t) {
     int sizeArray = 2;
     int posicion = 0;
     Token *tokens = (Token *)malloc(sizeArray * sizeof(Token));
+    // la siguiente variable permitira leer numeros negativos, en donde si encuentra un signo de menos 
+    // despues de un operador y seguido de un digito, valdra -1, y se multiplicara por el numero obteneido
+    int signo = 1;
 
     while (c[posicion] != '\0') {
         char caracter = c[posicion];
@@ -108,6 +116,14 @@ int tokenizarExpresion(char *c, Token **t) {
             tokens = realloc(tokens, sizeArray * sizeof(Token));
         }
 
+        if( ( posicion == 0  || tokens[size-1].tipo == OPERADOR ||  
+            tokens[size-1].tipo == PARENTESIS_IZQUIERDA || tokens[size-1].tipo == PARENTESIS_DERECHA )  
+            && (c[posicion+1] >= '0' && c[posicion+1] <= '9')  && caracter == '-'){
+            signo = -1;
+            posicion++;
+            continue;
+        }
+
         Token nuevoToken;
         if (caracter >= '0' && caracter <= '9') {
             float numero = 0;
@@ -117,11 +133,20 @@ int tokenizarExpresion(char *c, Token **t) {
                 posicion++;
             }
             nuevoToken.tipo = NUMERO;
+            if( signo == -1 ){
+                numero *= signo;
+                signo = 1;
+            }
             nuevoToken.valor = numero;
         } 
-        else {
-            nuevoToken = generarTokenOperacion(caracter);
-            posicion++;
+        else if(caracter=='+' || caracter=='-' || caracter=='(' || caracter==')' || caracter=='*' || caracter=='^'){
+            if( generarTokenOperacion(caracter,&nuevoToken) ){
+                posicion++;
+                continue;
+            }
+            // se regresa un 0 indicnaod que se ingreso un caracter no valido y no se puede procesar
+            size = 0 ;
+            break;
         }
         tokens[size] = nuevoToken;
         size++;

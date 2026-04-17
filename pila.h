@@ -50,7 +50,7 @@ void showPila(Pila *p);
 // Operaciones para evaluar las expresiones
 int tokenizarExpresion(char *c, Token **t);
 int convertir_postfija(Pila *p, Token *tokens, int size);
-Token generarTokenOperacion(char c);
+int generarTokenOperacion(char c, Token*);
 Pila invertirPila(Pila *p);
 
 #endif
