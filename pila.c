@@ -112,7 +112,9 @@ int generarTokenOperacion(char c, Token *token)
 
 int esUnario(Token *tokens, int size)
 {
-    if (size == 0) return 1;
+    // una funcion aparte para validar el signo de menos con numeros negativos,
+    if (size == 0)
+        return 1;
 
     Token anterior = tokens[size - 1];
 
@@ -129,162 +131,88 @@ int tokenizarExpresion(char *c, Token **t)
     int sizeArray = 2;
     int posicion = 0;
     Token *tokens = (Token *)malloc(sizeArray * sizeof(Token));
-    // la siguiente variable permitira leer numeros negativos, en donde si encuentra un signo de menos
-    // despues de un operador y seguido de un digito, valdra -1, y se multiplicara por el numero obteneido
-    int signo = 1;
+    // token temporal para poder guardar cada token en orden
     Token nuevoToken;
-    while (c[posicion] != '\0') {
+    while (c[posicion] != '\0')
+    {
 
-    char caracter = c[posicion];
-                if (size >= sizeArray)
+        char caracter = c[posicion];
+        if (size >= sizeArray)
         {
             sizeArray *= 2;
             tokens = realloc(tokens, sizeArray * sizeof(Token));
         }
-    if (caracter == ' ') {
-        posicion++;
-        continue;
-    }
-
-    if (caracter == '-') {
-
-    if (esUnario(tokens, size)) {
-
-        posicion++; // saltar '-'
-
-        float numero = 0;
-
-        while (c[posicion] >= '0' && c[posicion] <= '9') {
-            numero = numero * 10 + (c[posicion] - '0');
-            posicion++;
-        }
-
-        Token t;
-        t.tipo = NUMERO;
-        t.valor = -numero;
-
-        tokens[size++] = t;
-        continue;
-    }
-    else {
-        Token t;
-        generarTokenOperacion('-', &t);
-        tokens[size++] = t;
-        posicion++;
-        continue;
-    }
-}
-
-
-    // número
-    if (caracter >= '0' && caracter <= '9') {
-        float numero = 0;
-
-        while (c[posicion] >= '0' && c[posicion] <= '9') {
-            numero = numero * 10 + (c[posicion] - '0');
-            posicion++;
-        }
-
-        nuevoToken.tipo = NUMERO;
-        nuevoToken.valor = numero;
-        tokens[size++] = nuevoToken;
-        continue;
-    }
-
-    // operador
-    if (generarTokenOperacion(caracter, &nuevoToken)) {
-        tokens[size++] = nuevoToken;
-        posicion++;
-        continue;
-    }
-
-    // error real
-    free(tokens);
-    return 0;
-}
-
-/*
-    while (c[posicion] != '\0')
-    {
-        char caracter = c[posicion];
-
         if (caracter == ' ')
         {
             posicion++;
+            // hace un salto, hasta la siguiente iteracion, evitando tener que hacer las validaciones 
+            // sigueintes, es util para evitar que posicion aunmenta accidentalmente durante el proceso de validacion
             continue;
         }
 
-
-
-        if (posicion == 0 && caracter == '-' && (c[posicion + 1] >= '0' && c[posicion + 1] <= '9'))
-        {
-            signo = -1;
-            posicion++;
-            continue;
-        }
-        if ((posicion > 0 || tokens[size - 1].tipo == OPERADOR ||
-             tokens[size - 1].tipo == PARENTESIS_IZQUIERDA || tokens[size - 1].tipo == PARENTESIS_DERECHA) &&
-            (c[posicion + 1] >= '0' && c[posicion + 1] <= '9') && caracter == '-' )
+        if (caracter == '-')
         {
 
-            signo = -1;
-            posicion++;
-            continue;
+            if (esUnario(tokens, size))
+            {
+
+                posicion++; // saltar '-'
+
+                float numero = 0;
+                // si se trata un signo negativo de un numeros, formamos el numero, 
+                while (c[posicion] >= '0' && c[posicion] <= '9')
+                {
+                    numero = numero * 10 + (c[posicion] - '0');
+                    posicion++;
+                }
+
+                Token t;
+                t.tipo = NUMERO;
+                t.valor = (-1)*numero;
+
+                tokens[size++] = t;
+                continue;
+            }
+            else
+            {
+                Token t;
+                generarTokenOperacion('-', &t);
+                tokens[size++] = t;
+                posicion++;
+                continue;
+            }
         }
-        Token nuevoToken;
+
+        // número
         if (caracter >= '0' && caracter <= '9')
         {
             float numero = 0;
-            // CORRECCI�N: Usar c[posicion] directamente para no procesar el s�mbolo extra
+
             while (c[posicion] >= '0' && c[posicion] <= '9')
             {
-                numero = (numero * 10) + (c[posicion] - '0');
+                numero = numero * 10 + (c[posicion] - '0');
                 posicion++;
             }
+
             nuevoToken.tipo = NUMERO;
-            if (signo == -1)
-            {
-                numero *= signo;
-                signo = 1;
-            }
             nuevoToken.valor = numero;
-            tokens[size] = nuevoToken;
-            size++;
+            tokens[size++] = nuevoToken;
+            continue;
         }
-        else
+
+        // operador
+        if (generarTokenOperacion(caracter, &nuevoToken))
         {
-            if (generarTokenOperacion(caracter, &nuevoToken))
-            {
-                tokens[size] = nuevoToken;
-                size++;
-                posicion++;
-                continue;
-            }
-            // se regresa un 0 indicnaod que se ingreso un caracter no valido y no se puede procesar
-            size = 0;
-            break;
+            tokens[size++] = nuevoToken;
+            posicion++;
+            continue;
         }
 
-/*
-else if (caracter == '+' || caracter == '-' || caracter == '(' || caracter == ')' || caracter == '*' || caracter == '^' || caracter == '/')
-        {
-            if (generarTokenOperacion(caracter, &nuevoToken))
-            {
-                tokens[size] = nuevoToken;
-                size++;
-                posicion++;
-                continue;
-            }
-            // se regresa un 0 indicnaod que se ingreso un caracter no valido y no se puede procesar
-            size = 0;
-            break;
-        }
-
-
-
-
+        // en caso de no entrar en ninguno de los casos anteriores, el signo ingresado no es valido 
+        // por lo que no se pude procesar y la expresion estara mal
+        free(tokens);
+        return 0;
     }
-    */
     *t = tokens;
     return size;
 }
@@ -292,21 +220,23 @@ else if (caracter == '+' || caracter == '-' || caracter == '(' || caracter == ')
 int convertir_postfija(Pila *p, Token *tokens, int sizeTokens)
 {
     int i;
+    // aux guardara los operadores
     Pila aux;
-    TipoToken anterior = -1;
+    TipoToken anterior = -1; // se inicializa como -1, indicando que no hay aun un valor anterior
+     // lleva el control de los parentesis abiertos, es util en caso de que se cierre un parentesis pero no este 
+     // abierto un parentesis anterior, evitando vaciar la pila de aux, y no haya un parentesis de apertura '('
     int parentesis_abiertos = 0;
     inicializar(&aux);
 
     for (i = 0; i < sizeTokens; i++)
     {
-        // 1. N�MEROS: V�lidos al inicio o despu�s de Operador o '('
+        
         if (tokens[i].tipo == NUMERO)
         {
-            if (anterior == NUMERO)
-                return 0; // Error: 12 12
+            if (anterior == NUMERO) return 0;
             push(p, tokens[i]);
         }
-        // 2. OPERADORES: V�lidos despu�s de N�mero o ')'
+
         else if (tokens[i].tipo == OPERADOR)
         {
             if (anterior == OPERADOR || anterior == PARENTESIS_IZQUIERDA || anterior == -1)
@@ -324,7 +254,6 @@ int convertir_postfija(Pila *p, Token *tokens, int sizeTokens)
             }
             push(&aux, tokens[i]);
         }
-        // 3. PARENTESIS IZQUIERDO
         else if (tokens[i].tipo == PARENTESIS_IZQUIERDA)
         {
             push(&aux, tokens[i]);
@@ -364,3 +293,11 @@ int convertir_postfija(Pila *p, Token *tokens, int sizeTokens)
 
     return (parentesis_abiertos == 0) ? 1 : 0;
 }
+
+
+void cleanPila(Pila*p){
+    while(!vacia(p)){
+        pop(p);
+    }
+}
+

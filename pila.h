@@ -46,6 +46,7 @@ void pop(Pila *p);
 int vacia(Pila *p);
 int size(Pila *p);
 void showPila(Pila *p);
+void cleanPila(Pila*p);
 
 // Operaciones para evaluar las expresiones
 int tokenizarExpresion(char *c, Token **t);
