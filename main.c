@@ -164,7 +164,19 @@ int resolver(Pila *p, float *r)
 					}
 
 					break;
+				case '!':
+					if( b > 0 ){
+
+						
+
+					}else{
+						estado = 0;
+						printf("No se pude obtener factorial de numeros negativos");
+					}
+
+					break;
 				}
+				
 
 				Token t;
 				t.tipo = NUMERO;

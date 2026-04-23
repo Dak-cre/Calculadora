@@ -101,6 +101,9 @@ int generarTokenOperacion(char c, Token *token)
     {
         t.tipo = OPERADOR;
         t.prioridad = ALTA;
+    }else if( c == '!' ){
+        t.tipo = OPERADOR;
+        t.prioridad = ALTA;
     }
     else
     {

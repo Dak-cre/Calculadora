@@ -31,6 +31,19 @@ float potencia(float base,float n){
 
 }
 
+float factorial(float n){
+
+    float x = 1;
+    int i;
+    for( i=n; i>0; i++   ){
+
+        x = x*i;
+
+    }
+    return x;
+}
+
+
 
 
 
