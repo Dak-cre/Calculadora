@@ -8,6 +8,8 @@ float multipli(float x,float y);
 float division(float x, float y);
 float potencia(float base,float n);
 float factorial(float n);
+float modulo(float a,float b);
+float raiz(float a);
 
 
 #endif

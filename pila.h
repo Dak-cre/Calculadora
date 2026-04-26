@@ -7,7 +7,8 @@ typedef enum
 	NUMERO,
 	OPERADOR,
 	PARENTESIS_DERECHA,
-	PARENTESIS_IZQUIERDA
+	PARENTESIS_IZQUIERDA,
+	FACTORIAL, // Solo sera util para cuando se convierta a postfija, evitando errores.
 } TipoToken;
 // Servira para determinar la prioridad de una operacion entendiendo Baja como sumas y restas,
 // MEDIA como multiplicacion y division y ALTA a potencias

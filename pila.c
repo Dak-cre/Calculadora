@@ -104,6 +104,9 @@ int generarTokenOperacion(char c, Token *token)
     }else if( c == '!' ){
         t.tipo = OPERADOR;
         t.prioridad = ALTA;
+    }else if( c == '%'  ){
+        t.tipo = OPERADOR;
+        t.prioridad = ALTA;
     }
     else
     {
@@ -162,17 +165,24 @@ int tokenizarExpresion(char *c, Token **t)
                 posicion++; // saltar '-'
 
                 float numero = 0;
+                // La variable siguiente sera util para casos donde tengamos un numero negativo, ya que en esos
+                // casos nos deberemos asegurar de que tengan un orden correcto como 0.51561 o 21.656, pero en 
+                // casos como 12.5.6, no es valido por lo cual marcara un error
+                int numeroValido = 1; 
                 // si se trata un signo negativo de un numeros, formamos el numero, 
                 while (c[posicion] >= '0' && c[posicion] <= '9')
-                {
+                {   
+                    if(c[posicion])
                     numero = numero * 10 + (c[posicion] - '0');
                     posicion++;
+
+                    
+
                 }
 
                 Token t;
                 t.tipo = NUMERO;
                 t.valor = (-1)*numero;
-
                 tokens[size++] = t;
                 continue;
             }
@@ -211,6 +221,8 @@ int tokenizarExpresion(char *c, Token **t)
             continue;
         }
 
+        
+
         // en caso de no entrar en ninguno de los casos anteriores, el signo ingresado no es valido 
         // por lo que no se pude procesar y la expresion estara mal
         free(tokens);
@@ -236,11 +248,16 @@ int convertir_postfija(Pila *p, Token *tokens, int sizeTokens)
         
         if (tokens[i].tipo == NUMERO)
         {
-            if (anterior == NUMERO) return 0;
+            if (anterior == NUMERO || anterior==FACTORIAL) return 0;
             push(p, tokens[i]);
+            anterior = NUMERO;
+        }else if( tokens[i].operacion == '!' && anterior!= OPERADOR && anterior!= FACTORIAL){
+            push(p,tokens[i]);
+            // Como la operacion modulo ocupa de solo un valor y puedo tener expresiones como
+            // 3! * 4; el ! como es un operador puede marcar error al leer el *, por lo cual solo 
+            // ingreso el valor de !, en la pila de salida, y pongo anterior =NUmero para evitar errores
         }
-
-        else if (tokens[i].tipo == OPERADOR)
+        else if (tokens[i].tipo == OPERADOR && tokens[i].operacion!='!')
         {
             if (anterior == OPERADOR || anterior == PARENTESIS_IZQUIERDA || anterior == -1)
                 return 0;
@@ -282,7 +299,11 @@ int convertir_postfija(Pila *p, Token *tokens, int sizeTokens)
         {
             return 0; // Caracter extra�o
         }
-        anterior = tokens[i].tipo;
+        if( tokens[i].operacion == '!' ){
+            anterior = FACTORIAL;
+        }else{
+            anterior = tokens[i].tipo;
+        }
     }
 
     // Al terminar, vaciar lo que quede en aux

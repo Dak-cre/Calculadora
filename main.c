@@ -6,6 +6,7 @@
 char *filtrarExpresion(char *e);
 char *leerExpresion();
 int resolver(Pila *p, float *resultado);
+void obtenerOperandos(float *a, float *b, Pila *p);
 
 int main()
 {
@@ -17,16 +18,16 @@ int main()
 	printf(" \\____/\\__,_/_/\\___/\\__,_/_/\\__,_/\\__,_/\\____/_/   \\__,_/    \n");
 
 	printf("\n \n");
-	//int opc = -1;
+	// int opc = -1;
 	char opc = ' ';
-    char entrada[10];
+	char entrada[10];
 	do
 	{
-
+		printf("%f \n",raiz(121));
 		printf("Selecciones una opcion \n");
 		printf("1. Hacer calculo \n");
 		printf("0. Salir\n");
-		scanf(" %c",&opc);
+		scanf(" %c", &opc);
 		while (getchar() != '\n');
 		switch (opc)
 		{
@@ -34,7 +35,7 @@ int main()
 		case '1':
 		{
 			opc = ' ';
-			printf("Ingrese solo numeros enteros, y signos validos ( (),+,-,*,^ ) \n\n");
+			printf("Ingrese solo numeros enteros, y signos validos ( (),+,-,*,^, !, %%) \n\n");
 			printf("Ingrese la operacion: \n");
 			char *org;
 			org = leerExpresion();
@@ -107,7 +108,9 @@ int resolver(Pila *p, float *r)
 	inicializar(&numeros);
 
 	int estado = 1;
-
+	float a = 0;
+	float b = 0;
+	float resultado = 0;
 	// int i;
 
 	while (!vacia(&invertida) && estado)
@@ -118,30 +121,47 @@ int resolver(Pila *p, float *r)
 			push(&numeros, invertida.cabeza->token);
 			pop(&invertida);
 		}
+		else if (invertida.cabeza->token.operacion == '!' && size(&numeros) > 0)
+		{
+			float b = numeros.cabeza->token.valor;
+			pop(&numeros);
+			if (b > 0)
+			{
+				resultado = factorial(b);
+				Token t;
+				t.tipo = NUMERO;
+				t.valor = resultado;
+				pop(&invertida);
+				push(&numeros, t);
+			}
+			else
+			{
+				estado = 0;
+				printf("No se pude obtener factorial de numeros negativos\n");
+			}
+		}
 		else
 		{
 
 			if (numeros.size > 1)
 			{
 
-				float b = numeros.cabeza->token.valor;
-				pop(&numeros);
-				float a = numeros.cabeza->token.valor;
-				pop(&numeros);
-				float resultado = 0;
-
 				switch (invertida.cabeza->token.operacion)
 				{
 				case '+':
+					obtenerOperandos(&a, &b, &numeros);
 					resultado = suma(a, b);
 					break;
 				case '-':
+					obtenerOperandos(&a, &b, &numeros);
 					resultado = resta(a, b);
 					break;
 				case '*':
+					obtenerOperandos(&a, &b, &numeros);
 					resultado = multipli(a, b);
 					break;
 				case '/':
+					obtenerOperandos(&a, &b, &numeros);
 					if (b != 0)
 					{
 						resultado = division(a, b);
@@ -153,6 +173,7 @@ int resolver(Pila *p, float *r)
 					}
 					break;
 				case '^':
+					obtenerOperandos(&a, &b, &numeros);
 					if (((int)b) == b && b >= 0)
 					{
 						resultado = potencia(a, b);
@@ -164,19 +185,18 @@ int resolver(Pila *p, float *r)
 					}
 
 					break;
-				case '!':
-					if( b > 0 ){
-
-						
-
-					}else{
+				case '%':
+					obtenerOperandos(&a, &b, &numeros);
+					if( ( (int)a ) != a &&  ( (int)b ) != b ){
 						estado = 0;
-						printf("No se pude obtener factorial de numeros negativos");
+					}else if( b <= 0 && a> 0 ){
+						estado = 0;
+					}else{
+						resultado = modulo(a,b);
 					}
 
 					break;
 				}
-				
 
 				Token t;
 				t.tipo = NUMERO;
@@ -191,6 +211,16 @@ int resolver(Pila *p, float *r)
 	cleanPila(&numeros);
 	return estado;
 }
+
+void obtenerOperandos(float *a, float *b, Pila *p)
+{
+
+	*b = p->cabeza->token.valor;
+	pop(p);
+	*a = p->cabeza->token.valor;
+	pop(p);
+}
+
 char *leerExpresion()
 {
 	// Funcion para leer una expresion dinamicamente, permitiendo adpatarse a la cadena
@@ -247,4 +277,3 @@ char *filtrarExpresion(char *e)
 
 	return sinEspacios;
 }
-
