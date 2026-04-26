@@ -28,7 +28,11 @@ int main()
 		printf("1. Hacer calculo \n");
 		printf("0. Salir\n");
 		scanf(" %c", &opc);
-		while (getchar() != '\n');
+		char aux = getchar();
+		while ( aux!= '\n'){
+			aux = getchar();
+			opc = ' ';
+		}
 		switch (opc)
 		{
 

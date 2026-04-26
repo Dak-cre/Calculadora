@@ -101,10 +101,14 @@ int generarTokenOperacion(char c, Token *token)
     {
         t.tipo = OPERADOR;
         t.prioridad = ALTA;
-    }else if( c == '!' ){
+    }
+    else if (c == '!')
+    {
         t.tipo = OPERADOR;
         t.prioridad = ALTA;
-    }else if( c == '%'  ){
+    }
+    else if (c == '%')
+    {
         t.tipo = OPERADOR;
         t.prioridad = ALTA;
     }
@@ -151,7 +155,7 @@ int tokenizarExpresion(char *c, Token **t)
         if (caracter == ' ')
         {
             posicion++;
-            // hace un salto, hasta la siguiente iteracion, evitando tener que hacer las validaciones 
+            // hace un salto, hasta la siguiente iteracion, evitando tener que hacer las validaciones
             // sigueintes, es util para evitar que posicion aunmenta accidentalmente durante el proceso de validacion
             continue;
         }
@@ -163,26 +167,58 @@ int tokenizarExpresion(char *c, Token **t)
             {
 
                 posicion++; // saltar '-'
-
-                float numero = 0;
-                // La variable siguiente sera util para casos donde tengamos un numero negativo, ya que en esos
-                // casos nos deberemos asegurar de que tengan un orden correcto como 0.51561 o 21.656, pero en 
-                // casos como 12.5.6, no es valido por lo cual marcara un error
-                int numeroValido = 1; 
-                // si se trata un signo negativo de un numeros, formamos el numero, 
+                // esto validara que efectivamente despues de un signo de menos, que este caso no indica una
+                // operacion sino un valor negativo le siga un numero evitando problemas como
+                // -*, donde no le sigue un numero, pero si fue procesado como un signo negativo y no de operacion
+                int hayNumero = 0;
+                /*
+                // si se trata un signo negativo de un numeros, formamos el numero,
                 while (c[posicion] >= '0' && c[posicion] <= '9')
-                {   
-                    if(c[posicion])
+                {
+
+                    hayNumero = 1;
+
                     numero = numero * 10 + (c[posicion] - '0');
                     posicion++;
-
-                    
-
                 }
+                    */
+                float numero = 0;
+                int condicion = 1;
+                int decimales = 0;
+                int dividor = 10;
+
+                while (condicion && c[posicion] >= '0' && c[posicion] <= '9')
+                {
+                    hayNumero = 1;
+                    if (decimales)
+                    {
+                        numero = numero + (((float)(c[posicion] - '0')) / dividor);
+                        dividor *= 10;
+                    }
+                    else
+                    {
+                        numero = numero * 10 + (c[posicion] - '0');
+                    }
+
+                    posicion++;
+                    if (c[posicion] == '.' && decimales == 0)
+                    {
+                        decimales++;
+                        posicion++;
+                    }
+                    else if (c[posicion] == '.' && decimales >= 1)
+                    {
+                        condicion = 0;
+                        return 0;
+                    }
+                }
+
+                // si no le sigue un numero, entonces la sintaxis no estara correcta
+                if(!hayNumero) return 0;
 
                 Token t;
                 t.tipo = NUMERO;
-                t.valor = (-1)*numero;
+                t.valor = (-1) * numero;
                 tokens[size++] = t;
                 continue;
             }
@@ -200,11 +236,33 @@ int tokenizarExpresion(char *c, Token **t)
         if (caracter >= '0' && caracter <= '9')
         {
             float numero = 0;
+            int condicion = 1;
+            int decimales = 0;
+            int dividor = 10;
 
-            while (c[posicion] >= '0' && c[posicion] <= '9')
+            while (condicion && c[posicion] >= '0' && c[posicion] <= '9')
             {
-                numero = numero * 10 + (c[posicion] - '0');
+                if (decimales)
+                {
+                    numero = numero + (((float)(c[posicion] - '0')) / dividor);
+                    dividor *= 10;
+                }
+                else
+                {
+                    numero = numero * 10 + (c[posicion] - '0');
+                }
+
                 posicion++;
+                if (c[posicion] == '.' && decimales == 0)
+                {
+                    decimales++;
+                    posicion++;
+                }
+                else if (c[posicion] == '.' && decimales >= 1)
+                {
+                    condicion = 0;
+                    return 0;
+                }
             }
 
             nuevoToken.tipo = NUMERO;
@@ -221,9 +279,7 @@ int tokenizarExpresion(char *c, Token **t)
             continue;
         }
 
-        
-
-        // en caso de no entrar en ninguno de los casos anteriores, el signo ingresado no es valido 
+        // en caso de no entrar en ninguno de los casos anteriores, el signo ingresado no es valido
         // por lo que no se pude procesar y la expresion estara mal
         free(tokens);
         return 0;
@@ -238,26 +294,29 @@ int convertir_postfija(Pila *p, Token *tokens, int sizeTokens)
     // aux guardara los operadores
     Pila aux;
     TipoToken anterior = -1; // se inicializa como -1, indicando que no hay aun un valor anterior
-     // lleva el control de los parentesis abiertos, es util en caso de que se cierre un parentesis pero no este 
-     // abierto un parentesis anterior, evitando vaciar la pila de aux, y no haya un parentesis de apertura '('
+                             // lleva el control de los parentesis abiertos, es util en caso de que se cierre un parentesis pero no este
+                             // abierto un parentesis anterior, evitando vaciar la pila de aux, y no haya un parentesis de apertura '('
     int parentesis_abiertos = 0;
     inicializar(&aux);
 
     for (i = 0; i < sizeTokens; i++)
     {
-        
+
         if (tokens[i].tipo == NUMERO)
         {
-            if (anterior == NUMERO || anterior==FACTORIAL) return 0;
+            if (anterior == NUMERO || anterior == FACTORIAL)
+                return 0;
             push(p, tokens[i]);
             anterior = NUMERO;
-        }else if( tokens[i].operacion == '!' && anterior!= OPERADOR && anterior!= FACTORIAL){
-            push(p,tokens[i]);
+        }
+        else if (tokens[i].operacion == '!' && anterior != OPERADOR && anterior != FACTORIAL)
+        {
+            push(p, tokens[i]);
             // Como la operacion modulo ocupa de solo un valor y puedo tener expresiones como
-            // 3! * 4; el ! como es un operador puede marcar error al leer el *, por lo cual solo 
+            // 3! * 4; el ! como es un operador puede marcar error al leer el *, por lo cual solo
             // ingreso el valor de !, en la pila de salida, y pongo anterior =NUmero para evitar errores
         }
-        else if (tokens[i].tipo == OPERADOR && tokens[i].operacion!='!')
+        else if (tokens[i].tipo == OPERADOR && tokens[i].operacion != '!')
         {
             if (anterior == OPERADOR || anterior == PARENTESIS_IZQUIERDA || anterior == -1)
                 return 0;
@@ -299,9 +358,12 @@ int convertir_postfija(Pila *p, Token *tokens, int sizeTokens)
         {
             return 0; // Caracter extra�o
         }
-        if( tokens[i].operacion == '!' ){
+        if (tokens[i].operacion == '!')
+        {
             anterior = FACTORIAL;
-        }else{
+        }
+        else
+        {
             anterior = tokens[i].tipo;
         }
     }
@@ -318,10 +380,10 @@ int convertir_postfija(Pila *p, Token *tokens, int sizeTokens)
     return (parentesis_abiertos == 0) ? 1 : 0;
 }
 
-
-void cleanPila(Pila*p){
-    while(!vacia(p)){
+void cleanPila(Pila *p)
+{
+    while (!vacia(p))
+    {
         pop(p);
     }
 }
-
