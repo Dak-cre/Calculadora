@@ -29,12 +29,15 @@ float potencia(float base, float n)
 
     int i;
     float res = 1;
-    for (i = 0; i < n; i++)
+    int potencia = n;
+    if( n<0 ) potencia *= -1;
+    for (i = 0; i < potencia; i++)
     {
         res *= base;
     }
 
-    return res;
+
+    return (n>0) ? res : (1.0/res);
 }
 
 float factorial(float n)

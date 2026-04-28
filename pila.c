@@ -128,8 +128,8 @@ int esUnario(Token *tokens, int size)
 
     Token anterior = tokens[size - 1];
 
-    if (anterior.tipo == OPERADOR ||
-        anterior.tipo == PARENTESIS_IZQUIERDA)
+    if (  (anterior.tipo == OPERADOR && anterior.operacion!='!') ||
+        anterior.tipo == PARENTESIS_IZQUIERDA )
         return 1;
 
     return 0;

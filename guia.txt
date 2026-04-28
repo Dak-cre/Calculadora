@@ -1,0 +1,17 @@
+1. Valores aceptados
+ El sistema fue diseñado para aceptar numeros positivos, negativos y decimales,
+ estos deben tener el formato
+ Posiitovos = 25 78.5 
+ Negativos = -45 -89.2
+
+ en el caso de positivos solo deben ir como 23, 89.5, ya que si se ingresa como +89, el 
+ programa no los reconocera de manera correcta
+
+2. Operaciones aceptadas
+ Suma (+) : 23 + 8
+ Resta (-): 8 - 6
+ Multiplicacion (*): 78 * -5
+ Division (/): 34 /8, esta operacion sera valida siempre y cuando, el divisor sea distinto de 0
+ Potencia (^) : 2^2 2^-2, el sistema no permite elevar un numero a un potencia decimal, por lo cual marcara un error de sintaxis
+ Modulo (%): 23%25, esta operacion recupera el resto de la division por lo cual el valor del divisor debe ser distinto de 0
+ Factorial(!): 2!, el valor del que se desea obtener el Factorial debe ser un numero entero y positivo, de lo contrario marcara un error de sintaxis

@@ -1,10 +1,9 @@
 #include "pila.h"
 #include "operaciones.h"
-#include <stdlib.h>
+#include "aux.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-char *filtrarExpresion(char *e);
-char *leerExpresion();
 int resolver(Pila *p, float *resultado);
 void obtenerOperandos(float *a, float *b, Pila *p);
 
@@ -23,13 +22,13 @@ int main()
 	char entrada[10];
 	do
 	{
-		printf("%f \n",raiz(121));
 		printf("Selecciones una opcion \n");
 		printf("1. Hacer calculo \n");
 		printf("0. Salir\n");
 		scanf(" %c", &opc);
 		char aux = getchar();
-		while ( aux!= '\n'){
+		while (aux != '\n')
+		{
 			aux = getchar();
 			opc = ' ';
 		}
@@ -39,12 +38,21 @@ int main()
 		case '1':
 		{
 			opc = ' ';
-			printf("Ingrese solo numeros enteros, y signos validos ( (),+,-,*,^, !, %%) \n\n");
+			printf("El sistema acepta numeros enteros positivos y negativos asi como numeros decimales \n\n");
+			printf("Ingrese signos validos ( (),+,-,*,^, !, %%) \n\n");
+			printf("Si tiene mas dudas consulte el archivo guia.txt\n\n");
 			printf("Ingrese la operacion: \n");
 			char *org;
 			org = leerExpresion();
+			if(org == NULL){
+				printf("SINTAX ERROR \n");
+			}
+
 			char *exp;
 			exp = filtrarExpresion(org);
+			if(exp == NULL){
+				printf("SINTAX ERROR \n");
+			}
 			free(org);
 
 			Token *t;
@@ -64,6 +72,7 @@ int main()
 			if (estado == 0)
 			{
 				printf("SINTAX ERROR\n");
+				cleanPila(&expresion);
 				free(t);
 				free(exp);
 				break;
@@ -73,6 +82,7 @@ int main()
 			if (resolver(&expresion, &resultado) == 0)
 			{
 				printf("SINTAX ERROR\n");
+				cleanPila(&expresion);
 				free(exp);
 				free(t);
 				break;
@@ -81,6 +91,7 @@ int main()
 			printf(" = %f \n\n", resultado);
 			free(exp);
 			free(t);
+			cleanPila(&expresion);
 			break;
 		}
 
@@ -94,7 +105,7 @@ int main()
 		}
 
 	} while (opc != '0');
-	return 10;
+	return 0;
 }
 
 int resolver(Pila *p, float *r)
@@ -131,17 +142,23 @@ int resolver(Pila *p, float *r)
 			pop(&numeros);
 			if (b > 0)
 			{
-				resultado = factorial(b);
-				Token t;
-				t.tipo = NUMERO;
-				t.valor = resultado;
-				pop(&invertida);
-				push(&numeros, t);
+				if ( ((int)b) == b)
+				{
+					resultado = factorial(b);
+					Token t;
+					t.tipo = NUMERO;
+					t.valor = resultado;
+					pop(&invertida);
+					push(&numeros, t);
+				}else{
+					estado = 0;
+					break;
+				}
 			}
 			else
-			{
+			{	
 				estado = 0;
-				printf("No se pude obtener factorial de numeros negativos\n");
+				break;
 			}
 		}
 		else
@@ -178,25 +195,30 @@ int resolver(Pila *p, float *r)
 					break;
 				case '^':
 					obtenerOperandos(&a, &b, &numeros);
-					if (((int)b) == b && b >= 0)
+					if (((int)b) == b)
 					{
 						resultado = potencia(a, b);
 					}
 					else
 					{
+						printf("El programa no permite elevar un numero a un exponente decimal \n");
 						estado = 0;
-						printf("base mal \n");
 					}
 
 					break;
 				case '%':
 					obtenerOperandos(&a, &b, &numeros);
-					if( ( (int)a ) != a &&  ( (int)b ) != b ){
+					if ( ((int)a) != a && ((int)b) != b)
+					{
 						estado = 0;
-					}else if( b <= 0 && a> 0 ){
+					}
+					else if (b <= 0 && a > 0)
+					{
 						estado = 0;
-					}else{
-						resultado = modulo(a,b);
+					}
+					else
+					{
+						resultado = modulo(a, b);
 					}
 
 					break;
@@ -211,7 +233,7 @@ int resolver(Pila *p, float *r)
 		}
 	}
 
-	*r = numeros.cabeza->token.valor;
+	if(estado) *r = numeros.cabeza->token.valor;
 	cleanPila(&numeros);
 	return estado;
 }
@@ -223,61 +245,4 @@ void obtenerOperandos(float *a, float *b, Pila *p)
 	pop(p);
 	*a = p->cabeza->token.valor;
 	pop(p);
-}
-
-char *leerExpresion()
-{
-	// Funcion para leer una expresion dinamicamente, permitiendo adpatarse a la cadena
-	// de la expresion que el usuario ingrese, evitando usar un peque�o espacio o despediciar espacio
-	int cap = 1, len = 0;
-	char *ptr = malloc(cap);
-	// se lee como entero para obtener el codigo ascii del digito ingresado, permitiendo leer mejor
-	// cuando el usuario de enter.
-	int c;
-	while ((c = getchar()) != '\n' && c != EOF)
-	{
-		ptr[len] = (char)c;
-		len++;
-		if (len + 1 >= cap)
-		{
-			// se multiplica por 2, evitando tener que ampliar el espacio cada vez que ingresa un nuevo
-			// caracter el usuario, disminuyendo el numero de veces que se necesita ampliar el espacio
-			cap *= 2;
-			ptr = realloc(ptr, cap);
-		}
-	}
-	ptr[len] = '\0';
-	return ptr;
-}
-
-char *filtrarExpresion(char *e)
-{
-	int newSize = 0, cap = 1;
-	char *sinEspacios = malloc(cap);
-	int i = 0;
-
-	while (e[i] != '\0')
-	{
-		if (e[i] != ' ')
-		{
-			// Verificamos si hay espacio para el caracter Y el '\0'
-			if (newSize + 1 >= cap)
-			{
-				cap *= 2;
-				sinEspacios = realloc(sinEspacios, cap);
-			}
-			sinEspacios[newSize] = e[i];
-			newSize++;
-		}
-		i++;
-	}
-
-	// Aseguramos espacio final para el nulo por si acaso
-	if (newSize >= cap)
-	{
-		sinEspacios = realloc(sinEspacios, newSize + 1);
-	}
-	sinEspacios[newSize] = '\0';
-
-	return sinEspacios;
 }
